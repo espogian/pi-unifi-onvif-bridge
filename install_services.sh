@@ -24,6 +24,9 @@ else
     exit 1
 fi
 
+echo "Enabling systemd-time-wait-sync..."
+systemctl enable systemd-time-wait-sync
+
 # 2. Create MediaMTX Service
 echo "Creating MediaMTX Service..."
 cat <<EOF > /etc/systemd/system/mediamtx.service
@@ -49,11 +52,14 @@ echo "Creating ONVIF Server Service..."
 cat <<EOF > /etc/systemd/system/onvif-server.service
 [Unit]
 Description=NodeJS ONVIF Server
-After=network.target mediamtx.service
+After=network.target mediamtx.service time-sync.target
+Wants=time-sync.target
 
 [Service]
 User=pi
 WorkingDirectory=/home/pi/pi-unifi-onvif-bridge/onvif-server
+# Wait loop: Check date every second until year is >= 2025
+ExecStartPre=/bin/bash -c 'until [ $(date +%%Y) -ge 2025 ]; do sleep 1; done'
 # Using /usr/bin/node as requested. Ensure your config file is named config.yaml
 ExecStart=/usr/bin/node main.js config.yaml
 Restart=always
