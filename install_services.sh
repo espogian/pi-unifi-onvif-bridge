@@ -13,6 +13,17 @@ echo "Installing Node.js and NPM from repositories..."
 apt-get update
 apt-get install -y nodejs npm
 
+# We run this as user 'pi' so the node_modules folder isn't owned by root
+echo "Installing Node.js dependencies..."
+if [ -d "/home/pi/pi-unifi-onvif-bridge/onvif-server" ]; then
+    cd /home/pi/pi-unifi-onvif-bridge/onvif-server
+    sudo -u pi npm install
+else
+    echo "ERROR: Directory /home/pi/pi-unifi-onvif-bridge/onvif-server not found!"
+    echo "Please clone your repository before running this script."
+    exit 1
+fi
+
 # 2. Create MediaMTX Service
 echo "Creating MediaMTX Service..."
 cat <<EOF > /etc/systemd/system/mediamtx.service
