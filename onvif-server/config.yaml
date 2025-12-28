@@ -1,4 +1,5 @@
 onvif:
+  # Replace with actual MAC address of the Pi network interface
   - mac: 00:22:b0:6c:a8:ef
     ports:
       server: 8081
