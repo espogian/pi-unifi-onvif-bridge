@@ -4,7 +4,7 @@ onvif:
     ports:
       server: 8081
       rtsp: 8555
-      snapshot: 8580
+      # snapshot: 8580
     name: PiCamera
     uuid: c2647db1-e326-11f0-b97a-b827ebb9e46d
     # The 'target' is the actual source of the video
@@ -15,7 +15,7 @@ onvif:
         snapshot: 80
     highQuality:
       rtsp: /cam
-      snapshot: /onvif/snapshot?channel=1&subtype=0
+      # snapshot: /onvif/snapshot?channel=1&subtype=0
       width: 800
       height: 600
       framerate: 5
@@ -23,7 +23,7 @@ onvif:
       quality: 4
     lowQuality:
       rtsp: /cam
-      snapshot: /onvif/snapshot?channel=1&subtype=1
+      # snapshot: /onvif/snapshot?channel=1&subtype=1
       width: 800
       height: 600
       framerate: 5
