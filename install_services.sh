@@ -22,8 +22,8 @@ After=network.target
 
 [Service]
 User=pi
-WorkingDirectory=/home/pi/mediamtx
-ExecStart=/home/pi/mediamtx/mediamtx /home/pi/mediamtx/mediamtx.yml
+WorkingDirectory=/home/pi/pi-unifi-onvif-bridge/mediamtx
+ExecStart=/home/pi/pi-unifi-onvif-bridge/mediamtx/mediamtx /home/pi/pi-unifi-onvif-bridge/mediamtx/mediamtx.yml
 Restart=always
 RestartSec=5
 # Ottimizzazione priorità processo
@@ -42,7 +42,7 @@ After=network.target mediamtx.service
 
 [Service]
 User=pi
-WorkingDirectory=/home/pi/onvif-server
+WorkingDirectory=/home/pi/pi-unifi-onvif-bridge/onvif-server
 # Using /usr/bin/node as requested. Ensure your config file is named config.yaml
 ExecStart=/usr/bin/node main.js config.yaml
 Restart=always
