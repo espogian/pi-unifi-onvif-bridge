@@ -9,7 +9,7 @@ from http.server import HTTPServer
 
 # Import local modules
 from src.config_builder import create_config
-from src.onvif_server import OnvifServerInstance, OnvifHandler, WSDiscovery, get_ip_address_from_mac
+from src.onvif_server import OnvifServerInstance, OnvifHandler, WSDiscovery
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('Main')
@@ -41,13 +41,11 @@ class TCPProxy(threading.Thread):
             remote_sock.connect((self.dst_host, self.dst_port))
             self.pipe_sockets(client_sock, remote_sock)
         except Exception as e:
-            logger.error(f"Connection failed: {e}")
-        finally:
+            # Only log debug to prevent spam if camera is temporarily unreachable
+            logger.debug(f"Connection failed: {e}")
             client_sock.close()
-            remote_sock.close()
 
     def pipe_sockets(self, sock1, sock2):
-        # Bi-directional pipe
         def forward(source, destination):
             try:
                 while True:
@@ -56,7 +54,12 @@ class TCPProxy(threading.Thread):
                     destination.sendall(data)
             except:
                 pass
-        
+            finally:
+                try: destination.shutdown(socket.SHUT_RDWR) 
+                except: pass
+                try: destination.close() 
+                except: pass
+
         t1 = threading.Thread(target=forward, args=(sock1, sock2))
         t2 = threading.Thread(target=forward, args=(sock2, sock1))
         t1.start()
@@ -81,14 +84,15 @@ def main():
         password = input('Onvif Password: ')
         
         print('Generating config ...')
-        # Since create_config is async in logic but we are in sync main
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        config = loop.run_until_complete(create_config(hostname, username, password))
-        
-        print('# ==================== CONFIG START ====================')
-        print(yaml.dump(config, sort_keys=False))
-        print('# ===================== CONFIG END =====================')
+        try:
+            config = loop.run_until_complete(create_config(hostname, username, password))
+            print('# ==================== CONFIG START ====================')
+            print(yaml.dump(config, sort_keys=False))
+            print('# ===================== CONFIG END =====================')
+        except Exception as e:
+            print(f"Error creating config: {e}")
         return
 
     if not args.config:
@@ -112,12 +116,14 @@ def main():
             logger.error(f"Could not determine IP for MAC {onvif_conf['mac']}")
             continue
 
-        # Create a custom handler class that has access to the instance
-        class RequestHandler(OnvifHandler):
-            pass
-        RequestHandler.onvif_instance = server_instance # inject instance
-
-        httpd = HTTPServer((server_instance.config['hostname'], onvif_conf['ports']['server']), RequestHandler)
+        # --- FIX START ---
+        # Initialize the HTTPServer with the generic OnvifHandler
+        httpd = HTTPServer((server_instance.config['hostname'], onvif_conf['ports']['server']), OnvifHandler)
+        
+        # Attach the specific ONVIF instance logic to the SERVER object
+        # This allows self.server.onvif_instance to work in the handler
+        httpd.onvif_instance = server_instance
+        # --- FIX END ---
         
         t_server = threading.Thread(target=httpd.serve_forever)
         t_server.daemon = True
